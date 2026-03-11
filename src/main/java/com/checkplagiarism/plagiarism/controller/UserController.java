@@ -79,6 +79,12 @@ public class UserController {
     public ResponseEntity<ResultPaginationDTO> getAllUser(@Filter Specification<User> spec,Pageable page) {
         return ResponseEntity.ok().body(this.userService.handleGetAll(spec, page));
     }
+
+    @PutMapping("/users/lecturer/{id}")
+    public ResponseEntity<?> updateRoleLecturer(@PathVariable Long id) {
+        this.userService.setRoleLecturer(id);
+        return ResponseEntity.ok().body("update success");
+    }
     
     
 }

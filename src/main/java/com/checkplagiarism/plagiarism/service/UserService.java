@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.checkplagiarism.plagiarism.domain.Role;
 import com.checkplagiarism.plagiarism.domain.User;
 import com.checkplagiarism.plagiarism.domain.request.auth.ReqRegisterDTO;
 import com.checkplagiarism.plagiarism.domain.request.user.ReqCreateUserDTO;
@@ -17,6 +18,7 @@ import com.checkplagiarism.plagiarism.domain.response.ResultPaginationDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResCreateUserDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResFetchUserDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResUpdateUserDTO;
+import com.checkplagiarism.plagiarism.repository.RoleRepository;
 import com.checkplagiarism.plagiarism.repository.UserRepository;
 
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ import lombok.AllArgsConstructor;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository repository;
 
     public User createUser(ReqCreateUserDTO req){
         User user=new User();
@@ -126,10 +129,24 @@ public class UserService {
     }
 
     public User register(ReqRegisterDTO req) {
+        Role role= this.repository.findByName("STUDENT");
+
         User user = new User();
         user.setName(req.getName());
         user.setEmail(req.getEmail());
         user.setPassword(req.getPassword());
+        if (role != null) {
+            user.setRole(role);
+        }
         return this.userRepository.save(user);
+    }
+
+    public void setRoleLecturer(Long id){
+        Role role = this.repository.findByName("STUDENT");
+        User user = this.userRepository.findById(id).orElse(null);
+        if (user!=null) {
+            user.setRole(role);
+            this.userRepository.save(user);
+        }
     }
 }
