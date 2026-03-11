@@ -18,8 +18,13 @@ public class Document {
 
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String contentText;
+
+    private String fileUrl;
+
+    @Column(unique = true)
+    private String hash;
 
     private LocalDateTime createdAt;
 

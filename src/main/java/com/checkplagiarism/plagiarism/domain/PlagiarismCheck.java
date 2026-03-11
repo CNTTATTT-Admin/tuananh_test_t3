@@ -17,16 +17,13 @@ public class PlagiarismCheck {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(columnDefinition = "TEXT")
-    private String inputText;
-
-    private String fileUrl;
-
     private Double plagiarismPercent;
 
     private String resultStatus;
 
     private LocalDateTime createdAt;
+
+    private Long processingTimeMs;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

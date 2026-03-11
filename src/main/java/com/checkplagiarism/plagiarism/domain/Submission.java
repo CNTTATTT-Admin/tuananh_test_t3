@@ -1,6 +1,7 @@
 package com.checkplagiarism.plagiarism.domain;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class Submission {
     private String content;
     private String fileUrl;
     private double plagiarismPercent;
-    private Instant submittedAt;
+    private LocalDateTime submittedAt;
 
     // @ManyToOne
     // @JoinColumn(name = "class_id")

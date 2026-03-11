@@ -72,7 +72,7 @@ public class ThresholdController {
         return ResponseEntity.ok().body(null);
     }
 
-    @PutMapping("/thresholds")
+    @PutMapping("/thresholds/default")
     public ResponseEntity<?> setDefault(@RequestBody Long classId) {
         this.service.setDefault(classId);
         return ResponseEntity.ok().body("set default success");
