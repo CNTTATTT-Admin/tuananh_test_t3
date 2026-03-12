@@ -7,11 +7,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.checkplagiarism.plagiarism.domain.ClassStudent;
+import com.checkplagiarism.plagiarism.util.constants.ClassStatusEnum;
 
 @Repository
 public interface ClassStudentRepository extends JpaRepository<ClassStudent,Long>,JpaSpecificationExecutor<ClassStudent>{
     List<ClassStudent> findByClassRoomId(Long Id);
-    ClassStudent findByUserAndClassRoom(Long userId, Long classId);
+    ClassStudent findByUserIdAndClassRoomId(Long userId, Long classId);
+
+    List<ClassStudent> findByUserId(Long id);
+
+    List<ClassStudent> findByUserIdAndStatus(Long id, ClassStatusEnum status);
 
 
 }

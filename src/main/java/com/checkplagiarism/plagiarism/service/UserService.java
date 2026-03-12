@@ -31,6 +31,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository repository;
 
+
     public User createUser(ReqCreateUserDTO req){
         User user=new User();
         user.setName(req.getName());
@@ -39,6 +40,9 @@ public class UserService {
         user.setPassword(password);
         user.setAge(req.getAge());
         user.setGender(req.getGender());
+
+        Role role = this.repository.findByName("STUDENT");
+        user.setRole(role);
         return this.userRepository.save(user);
     }
 
@@ -142,11 +146,12 @@ public class UserService {
     }
 
     public void setRoleLecturer(Long id){
-        Role role = this.repository.findByName("STUDENT");
+        Role role = this.repository.findByName("LECTURER");
         User user = this.userRepository.findById(id).orElse(null);
         if (user!=null) {
             user.setRole(role);
             this.userRepository.save(user);
         }
     }
+
 }

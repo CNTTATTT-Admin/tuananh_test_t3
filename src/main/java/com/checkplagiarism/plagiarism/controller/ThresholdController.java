@@ -13,6 +13,8 @@ import com.turkraft.springfilter.boot.Filter;
 
 import lombok.AllArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -77,4 +79,10 @@ public class ThresholdController {
         this.service.setDefault(classId);
         return ResponseEntity.ok().body("set default success");
     }
+
+    @GetMapping("/thresholds/class/{classId}")
+    public ResponseEntity<List<PlagiarismThresholds>> getByClass(@PathVariable Long classId) {
+        return ResponseEntity.ok().body(this.service.getThresholdByClass(classId));
+    }
+    
 }

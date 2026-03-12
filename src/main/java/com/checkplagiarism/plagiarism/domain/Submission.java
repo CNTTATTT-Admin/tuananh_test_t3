@@ -47,7 +47,7 @@ public class Submission {
     private User student;
 
     @ManyToOne
-    @JoinColumn(name = "assignment_id")
+    @JoinColumn(name = "assignment_id", nullable = true)
     private Assignment assignment;
 
 

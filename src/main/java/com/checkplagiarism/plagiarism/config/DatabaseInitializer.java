@@ -72,8 +72,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             arr.add(new Permission("Approved student join class room", "/api/v1/classes/approved", "PUT", "CLASS ROOM"));
             arr.add(new Permission("rejected student join class room", "/api/v1/classes/rejected", "PUT", "CLASS ROOM"));
             arr.add(new Permission("leave a class room", "/api/v1/classes/leave", "PUT", "CLASS ROOM"));
-            arr.add(new Permission("Delete student in class", "/classes/{classId}/remove/{userId}", "DELETE", "CLASS ROOM"));
-            arr.add(new Permission("Get student in class", "/classes/user/{classId}", "GET", "CLASS ROOM"));
+            arr.add(new Permission("Delete student in class", "api/v1/classes/{classId}/remove/{userId}", "DELETE", "CLASS ROOM"));
+            arr.add(new Permission("Get student in class", "api/v1/classes/user/{classId}", "GET", "CLASS ROOM"));
 
             arr.add(new Permission("Create a assignment", "/api/v1/assignments", "POST", "ASSIGNMENT"));
             arr.add(new Permission("Update a assignment", "/api/v1/assignments", "PUT", "ASSIGNMENT"));
@@ -94,7 +94,11 @@ public class DatabaseInitializer implements CommandLineRunner {
             arr.add(new Permission("Get thresholds with pagination", "/api/v1/thresholds", "GET", "THRESHOLD"));
 
             arr.add(new Permission("Get a check by submission id", "/api/v1/checks/{submissionId}", "GET", "SUBMISSION"));
-
+            
+            arr.add(new Permission("Get class by student", "/api/v1/classes/user", "GET", "CLASS"));
+            arr.add(new Permission("Get class by lecturer", "/api/v1/classes/lecturer", "GET", "CLASS"));
+            arr.add(new Permission("Get thresshold by user", "/api/v1/thresholds/class/{classId}", "GET", "THRESHOLD"));
+            arr.add(new Permission("create submission ", "/api/v1/submissions", "POST", "SUBMISSION"));
             this.permissionrRepository.saveAll(arr);
 
             
@@ -111,26 +115,26 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             this.roleRepository.save(adminRole);
 
-            List<Long> studentIds = List.of(23L, 26L, 28L, 34L, 35L);
+            List<Long> studentIds = List.of(23L, 26L, 28L, 34L, 35L,45L,46L,48L);
             List<Permission> studentPermissions = permissionrRepository.findByIdIn(studentIds);
 
             Role studentRole = new Role();
             studentRole.setName("STUDENT");
-            adminRole.setDescription("this's student role");
-            adminRole.setActive(true);
+            studentRole.setDescription("this's student role");
+            studentRole.setActive(true);
             studentRole.setPermissions(studentPermissions);
 
             roleRepository.save(studentRole);
 
 
-            List<Long> lecturerIds = List.of(17L, 18L, 19L, 20L, 21L, 22L, 24L, 25L, 27L, 28L, 29L, 30L, 31L, 32L, 33L, 34L, 35L, 36L, 37L, 38L, 39L, 40L, 41L, 42L, 43L, 44L);
+            List<Long> lecturerIds = List.of(17L, 18L, 19L, 20L, 21L, 22L, 24L, 25L, 27L, 28L, 29L, 30L, 31L, 32L, 33L, 34L, 35L, 36L, 37L, 38L, 39L, 40L, 41L, 42L, 43L, 44L,45L,46L,47L,48L);
             List<Permission> lecturerPermissions = permissionrRepository.findByIdIn(lecturerIds);
 
             Role lecturerRole = new Role();
-            studentRole.setName("STUDENT");
-            adminRole.setDescription("this's student role");
-            adminRole.setActive(true);
-            studentRole.setPermissions(lecturerPermissions);
+            lecturerRole.setName("LECTURER");
+            lecturerRole.setDescription("this's lecturer role");
+            lecturerRole.setActive(true);
+            lecturerRole.setPermissions(lecturerPermissions);
 
             roleRepository.save(lecturerRole);
         }
