@@ -1,28 +1,31 @@
 package com.checkplagiarism.plagiarism.domain.response.classes;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResClassStudentDTO {
-    private classRoomInner classRoom;
-    private List<userInner> user;
+public class ResGetClassByLecturerDTO {
+    private userInner lecturer;
+    private List<classRoomInner> classRoom;
 
     @Getter
     @Setter
     @AllArgsConstructor
     @NoArgsConstructor
     public static class classRoomInner {
-    private Long id;
-    private String name;
-    private String description;
-    private String code;
+        private Long id;
+        private String name;
+        private String description;
+        private String code;
+        private String lecturer;
+        private int studentCount;
     }
 
     @Getter
@@ -33,7 +36,6 @@ public class ResClassStudentDTO {
     private Long id;
     private String name;
     private String email;
-    private LocalDateTime joinAt;
         
     }
 }

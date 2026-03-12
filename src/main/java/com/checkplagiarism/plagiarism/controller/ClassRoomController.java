@@ -8,13 +8,19 @@ import com.checkplagiarism.plagiarism.domain.ClassStudent;
 import com.checkplagiarism.plagiarism.domain.User;
 import com.checkplagiarism.plagiarism.domain.request.classroom.ReqAddToClassDTO;
 import com.checkplagiarism.plagiarism.domain.request.classroom.ReqCreateClassDTO;
+import com.checkplagiarism.plagiarism.domain.request.classroom.ReqJoinClassDTO;
+import com.checkplagiarism.plagiarism.domain.request.classroom.ReqLeaveClassDTO;
 import com.checkplagiarism.plagiarism.domain.request.classroom.ReqUpdateClassDTO;
 import com.checkplagiarism.plagiarism.domain.request.classroom.ReqUpdateStudentClassDTO;
 import com.checkplagiarism.plagiarism.domain.response.ResultPaginationDTO;
+import com.checkplagiarism.plagiarism.domain.response.classes.ResClassLecturerDTO;
 import com.checkplagiarism.plagiarism.domain.response.classes.ResClassStudentDTO;
+import com.checkplagiarism.plagiarism.domain.response.classes.ResGetClassByLecturerDTO;
+import com.checkplagiarism.plagiarism.domain.response.classes.ResGetClassByUserDTO;
 import com.checkplagiarism.plagiarism.repository.ClassStudentRepository;
 import com.checkplagiarism.plagiarism.service.ClassRoomService;
 import com.checkplagiarism.plagiarism.service.UserService;
+import com.checkplagiarism.plagiarism.util.SecurityUtil;
 import com.checkplagiarism.plagiarism.util.err.IdInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 
@@ -43,27 +49,27 @@ public class ClassRoomController {
     private final UserService userService;
 
     @PostMapping("/classes")
-    public ResponseEntity<ClassRoom> createClassRoom(@RequestBody ReqCreateClassDTO req) {
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.classRoomService.createClass(req));
+    public ResponseEntity<ResClassLecturerDTO> createClassRoom(@RequestBody ReqCreateClassDTO req) {
+        ClassRoom classRoom= this.classRoomService.createClass(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.classRoomService.convResClassLecturerDTO(classRoom));
     }
 
     @PutMapping("/classes")
-    public ResponseEntity<ClassRoom> updateClassRoom( @RequestBody ReqUpdateClassDTO req) throws IdInvalidException {
+    public ResponseEntity<ResClassLecturerDTO> updateClassRoom( @RequestBody ReqUpdateClassDTO req) throws IdInvalidException {
         ClassRoom classRoom= this.classRoomService.getByClassRoomId(req.getId());
         if (classRoom==null) {
             throw new IdInvalidException("class room not found");
         }
-        return ResponseEntity.ok().body(this.classRoomService.updateClass(req));
+        return ResponseEntity.ok().body(this.classRoomService.convResClassLecturerDTO(classRoom));
     }
 
     @GetMapping("/classes/{id}")
-    public ResponseEntity<ClassRoom> getClassRoomById(@PathVariable Long id) throws IdInvalidException {
+    public ResponseEntity<ResClassLecturerDTO> getClassRoomById(@PathVariable Long id) throws IdInvalidException {
         ClassRoom classRoom = this.classRoomService.getByClassRoomId(id);
         if (classRoom == null) {
             throw new IdInvalidException("class room not found");
         }
-        return ResponseEntity.ok().body(classRoom);
+        return ResponseEntity.ok().body(this.classRoomService.convResClassLecturerDTO(classRoom));
     }
 
         @GetMapping("/classes")
@@ -125,22 +131,22 @@ public class ClassRoomController {
 
 
     @PostMapping("/classes/join")
-    public ResponseEntity<?> joinClassRoom(@RequestBody String classCode) throws IdInvalidException {
-        ClassRoom classRoom= this.classRoomService.findByClassCode(classCode);
+    public ResponseEntity<?> joinClassRoom(@RequestBody ReqJoinClassDTO req) throws IdInvalidException {
+        ClassRoom classRoom= this.classRoomService.findByClassCode(req.getClassCode());
         if (classRoom == null) {
             throw new IdInvalidException("class not found");
         }
-        this.classRoomService.joinClass(classCode);
+        this.classRoomService.joinClass(req);
         return ResponseEntity.ok().body("join class success");
     }
 
     @PutMapping("/classes/leave")
-    public ResponseEntity<?> leaveClassRoom(@RequestBody Long classId) throws IdInvalidException {
-        ClassRoom classRoom = this.classRoomService.getByClassRoomId(classId);
+    public ResponseEntity<?> leaveClassRoom(@RequestBody ReqLeaveClassDTO req) throws IdInvalidException {
+        ClassRoom classRoom = this.classRoomService.getByClassRoomId(req.getClassId());
         if (classRoom == null) {
             throw new IdInvalidException("class room not found");
         }
-        this.classRoomService.leaveClass(classId);;
+        this.classRoomService.leaveClass(req);
         return ResponseEntity.ok().body("leave class success");
     }
 
@@ -148,6 +154,18 @@ public class ClassRoomController {
     public ResponseEntity<ResClassStudentDTO> getAllStudent(@PathVariable("classId") Long classId) {
         return ResponseEntity.ok().body(this.classRoomService.getUserFromClass(classId));
     }
+
+    @GetMapping("/classes/user")
+    public ResponseEntity<ResGetClassByUserDTO> getClassByUser() {
+        return ResponseEntity.ok().body(this.classRoomService.getClassByUserId());
+    }
+
+    @GetMapping("/classes/lecturer")
+    public ResponseEntity<ResGetClassByLecturerDTO> getClassByLecturer() {
+        return ResponseEntity.ok().body(this.classRoomService.getClassByLecturer());
+    }
+
     
+
     
 }

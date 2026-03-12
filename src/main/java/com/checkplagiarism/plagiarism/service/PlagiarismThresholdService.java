@@ -29,7 +29,11 @@ public class PlagiarismThresholdService {
         pl.setDescription(req.getDescription());
         pl.setMax(req.getMax());
         pl.setMin(req.getMin());
-        pl.setDefault(false);
+        if (this.plagiarismThresholdRepository.findAll().size()>4) {
+            
+            pl.setDefault(false);
+        }
+        pl.setDefault(true);
 
         
         if (req.getClassId()!=null) {
@@ -41,11 +45,14 @@ public class PlagiarismThresholdService {
     }
 
     public PlagiarismThresholds update(ReqUpdateThresholdDTO req) {
-        PlagiarismThresholds pl = new PlagiarismThresholds();
-        pl.setLevelName(req.getLevelName());
-        pl.setDescription(req.getDescription());
-        pl.setMax(req.getMax());
-        pl.setMin(req.getMin());
+        PlagiarismThresholds pl = this.plagiarismThresholdRepository.getById(req.getId());
+        if (pl!=null) {
+            
+            pl.setLevelName(req.getLevelName());
+            pl.setDescription(req.getDescription());
+            pl.setMax(req.getMax());
+            pl.setMin(req.getMin());
+        }
 
         if (req.getClassId() != null) {
             ClassRoom classRoom = this.classRoomRepository.findById(req.getClassId()).orElse(null);

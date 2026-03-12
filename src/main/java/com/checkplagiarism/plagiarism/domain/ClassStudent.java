@@ -1,6 +1,7 @@
 package com.checkplagiarism.plagiarism.domain;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.checkplagiarism.plagiarism.util.constants.ClassStatusEnum;
 import com.checkplagiarism.plagiarism.util.constants.RoleEnum;
@@ -28,7 +29,7 @@ public class ClassStudent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Instant joinAt;
+    private LocalDateTime joinAt;
     @Enumerated(EnumType.STRING)
     private RoleEnum roleInClass;
     @Enumerated(EnumType.STRING)
