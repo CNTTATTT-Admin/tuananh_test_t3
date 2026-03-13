@@ -1,5 +1,7 @@
 package com.checkplagiarism.plagiarism.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import com.checkplagiarism.plagiarism.domain.request.assignment.ReqUpdateAssignm
 import com.checkplagiarism.plagiarism.domain.request.user.ReqCreateUserDTO;
 import com.checkplagiarism.plagiarism.domain.request.user.ReqUpdateUserDTO;
 import com.checkplagiarism.plagiarism.domain.response.ResultPaginationDTO;
+import com.checkplagiarism.plagiarism.domain.response.assignment.ResAssignmentDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResCreateUserDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResFetchUserDTO;
 import com.checkplagiarism.plagiarism.domain.response.user.ResUpdateUserDTO;
@@ -35,18 +38,20 @@ public class AssignmentController {
     private final AssignmentService assignmentService;
     
       @PostMapping("/assignments")
-    public ResponseEntity<Assignment> createAssignment(@RequestBody ReqCreateAssignmentDTO req) throws IdInvalidException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(this.assignmentService.createAssignment(req));
+    public ResponseEntity<ResAssignmentDTO> createAssignment(@RequestBody ReqCreateAssignmentDTO req) throws IdInvalidException {
+        Assignment as= this.assignmentService.createAssignment(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.assignmentService.convResAssignmentDTO(as));
     }
 
     @PutMapping("/assignments")
-    public ResponseEntity<Assignment> updateAssinment( @RequestBody ReqUpdateAssignmentDTO req) throws IdInvalidException {
+    public ResponseEntity<ResAssignmentDTO> updateAssinment( @RequestBody ReqUpdateAssignmentDTO req) throws IdInvalidException {
         Assignment assignment= this.assignmentService.getAssignmentById(req.getId());
         if (assignment==null) {
             throw new IdInvalidException("assignment not found");
         }
+        assignment= this.assignmentService.updateAssignment(req);
         
-        return ResponseEntity.ok().body(this.assignmentService.updateAssignment(req));
+        return ResponseEntity.ok().body(this.assignmentService.convResAssignmentDTO(assignment));
     }
 
     @DeleteMapping("/assignments/{id}")
@@ -60,17 +65,22 @@ public class AssignmentController {
     }
 
     @GetMapping("/assignments/{id}")
-    public ResponseEntity<Assignment> getUserById(@PathVariable ("id") Long id) throws IdInvalidException {
+    public ResponseEntity<ResAssignmentDTO> getUserById(@PathVariable ("id") Long id) throws IdInvalidException {
         Assignment assignment = this.assignmentService.getAssignmentById(id);
         if (assignment == null) {
             throw new IdInvalidException("assignment not found");
         }
-        return ResponseEntity.ok().body(assignment);
+        return ResponseEntity.ok().body(this.assignmentService.convResAssignmentDTO(assignment));
     }
 
 
     @GetMapping("/assignments")
     public ResponseEntity<ResultPaginationDTO> getAllUser(@Filter Specification<Assignment> spec,Pageable page) {
         return ResponseEntity.ok().body(this.assignmentService.handleGetAll(spec, page));
+    }
+
+    @GetMapping("/assignments/class/{classRoomId}")
+    public ResponseEntity<List<ResAssignmentDTO>> getUserByClass(@PathVariable Long classRoomId) throws IdInvalidException {
+        return ResponseEntity.ok().body(this.assignmentService.getAssignmentByClassId(classRoomId));
     }
 }

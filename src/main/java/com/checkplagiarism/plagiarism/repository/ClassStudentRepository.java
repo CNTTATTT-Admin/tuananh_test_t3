@@ -18,5 +18,6 @@ public interface ClassStudentRepository extends JpaRepository<ClassStudent,Long>
 
     List<ClassStudent> findByUserIdAndStatus(Long id, ClassStatusEnum status);
 
+    boolean existsByUserIdAndClassRoomId(Long userId,Long classId);
 
 }

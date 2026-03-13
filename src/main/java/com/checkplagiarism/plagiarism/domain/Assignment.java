@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,7 +35,7 @@ public class Assignment {
     private String title;
     private String description;
     private LocalDateTime dueDate;
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @ManyToOne
     @JoinColumn(name = "class_id")
@@ -43,4 +44,9 @@ public class Assignment {
     @OneToMany(mappedBy = "assignment",fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Submission> submissions;
+
+    @PrePersist
+    public void handleBefore(){
+        this.createdAt= LocalDateTime.now();
+    }
 }

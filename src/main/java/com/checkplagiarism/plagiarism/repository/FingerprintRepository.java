@@ -1,5 +1,6 @@
 package com.checkplagiarism.plagiarism.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,6 @@ import com.checkplagiarism.plagiarism.domain.DocumentFingerprint;
 @Repository
 public interface FingerprintRepository extends JpaRepository<DocumentFingerprint,Long>{
 
-    List<DocumentFingerprint> findByHashValueIn(Set<Long> hashes);
+    List<DocumentFingerprint> findByHashValueIn(Collection<Long> hashes);
     
 }

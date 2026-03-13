@@ -14,5 +14,9 @@ public interface PlagiarismThresholdRepository extends JpaRepository<PlagiarismT
     List<PlagiarismThresholds> findByClassRoomId(Long classId);
 
     List<PlagiarismThresholds> findByIsDefaultTrue();
+
+    List<PlagiarismThresholds> findByClassRoomIdOrderByMaxAsc(Long classId);
+
+    List<PlagiarismThresholds> findByClassRoomIdOrderByMinAsc(Long id);
     
 }

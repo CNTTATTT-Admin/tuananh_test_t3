@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.checkplagiarism.plagiarism.domain.FingerPrint;
+
 import lombok.AllArgsConstructor;
 
 @Service
@@ -48,18 +50,24 @@ public class FingerprintService {
         return gram.hashCode();
     }
 
-    public Set<Long> generateFingerprints(String text) {
+    public List<FingerPrint> generateFingerprints(String text) {
 
         text = normalizeText(text);
 
         List<String> grams = generateNGrams(text, 5);
 
-        Set<Long> hashes = new HashSet<>();
+        List<FingerPrint> fingerprints = new ArrayList<>();
+
+        int pos = 0;
 
         for (String gram : grams) {
-            hashes.add(hash(gram));
+
+            long hash = hash(gram);
+
+            fingerprints.add(
+                    new FingerPrint(hash, pos++));
         }
 
-        return hashes;
+        return fingerprints;
     }
 }

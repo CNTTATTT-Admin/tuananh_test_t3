@@ -22,6 +22,7 @@ public class DocumentFingerprint {
 
     private Long hashValue;
 
+    private int position;
     @ManyToOne
     @JoinColumn(name = "document_id")
     private Document document;
