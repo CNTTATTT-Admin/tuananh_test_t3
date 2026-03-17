@@ -62,15 +62,17 @@ public class SubmissionService {
 
     submissionRepository.save(submission);
 
-    PlagiarismCheck check =
-            checkService.createCheck(submission);
+              // 1. LƯU + INDEX TRƯỚC
+            Document doc = documentService.saveDocument(text, "file_url");
 
-    double percent =
-            plagiarismService.checkPlagiarism(text,check);
+            // 2. tạo check
+            PlagiarismCheck check = checkService.createCheck(submission);
 
-    checkService.finishCheck(check,percent);
+            // 3. check (truyền docId vào)
+            double percent = plagiarismService.checkPlagiarism(text, doc.getId());
 
-    documentService.saveDocument(text,"file_url");
+            // 4. finish
+            checkService.finishCheck(check, percent);
 
     submission.setPlagiarismPercent(percent);
 
@@ -96,15 +98,17 @@ public class SubmissionService {
         submission.setSubmittedAt(LocalDateTime.now());
 
         submissionRepository.save(submission);
+            // 1. LƯU + INDEX TRƯỚC
+            Document doc = documentService.saveDocument(text, "file_url");
 
-        PlagiarismCheck check = checkService.createCheck(submission);
+            // 2. tạo check
+            PlagiarismCheck check = checkService.createCheck(submission);
 
-        double percent = plagiarismService.checkPlagiarism(text, check);
+            // 3. check (truyền docId vào)
+            double percent = plagiarismService.checkPlagiarism(text, doc.getId());
 
-        checkService.finishCheck(check, percent);
-
-        documentService.saveDocument(text, "file_url");
-
+            // 4. finish
+            checkService.finishCheck(check, percent);
         submission.setPlagiarismPercent(percent);
 
         submissionRepository.save(submission);

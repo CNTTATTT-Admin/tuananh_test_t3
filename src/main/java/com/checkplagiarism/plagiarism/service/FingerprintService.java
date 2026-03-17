@@ -1,6 +1,7 @@
 package com.checkplagiarism.plagiarism.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,16 +15,12 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class FingerprintService {
-     public String normalizeText(String text) {
-
-        text = text.toLowerCase();
-
-        text = text.replaceAll("[^a-z0-9 ]", " ");
-
-        text = text.replaceAll("\\s+", " ");
-
-        return text;
-    }
+private String normalizeText(String text) {
+    return text
+        .toLowerCase()
+        .replaceAll("\\s+", " ")
+        .trim();
+}
 
     public List<String> generateNGrams(String text, int n) {
 
@@ -52,22 +49,21 @@ public class FingerprintService {
 
     public List<FingerPrint> generateFingerprints(String text) {
 
-        text = normalizeText(text);
+        text = normalizeText(text); 
+        int k = 5;
+        List<String> words = Arrays.asList(text.split("\\s+"));
 
-        List<String> grams = generateNGrams(text, 5);
+        List<FingerPrint> list = new ArrayList<>();
 
-        List<FingerPrint> fingerprints = new ArrayList<>();
+        for (int i = 0; i <= words.size() - k; i++) {
 
-        int pos = 0;
-
-        for (String gram : grams) {
+            String gram = String.join(" ", words.subList(i, i + k));
 
             long hash = hash(gram);
 
-            fingerprints.add(
-                    new FingerPrint(hash, pos++));
+            list.add(new FingerPrint(hash, i));
         }
 
-        return fingerprints;
+        return list;
     }
 }

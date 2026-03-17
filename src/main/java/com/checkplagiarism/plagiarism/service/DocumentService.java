@@ -24,6 +24,7 @@ public class DocumentService {
 private final DocumentRepository documentRepository;
     private final FingerprintRepository fingerprintRepository;
     private final FingerprintService fingerprintService;
+    private final FingerprintIndexService fingerprintIndexService;
 
     public Document saveDocument(String text, String fileUrl) {
 
@@ -31,20 +32,22 @@ private final DocumentRepository documentRepository;
 
         Optional<Document> existing = documentRepository.findByHash(hash);
 
+        Document doc;
+
         if (existing.isPresent()) {
-            return existing.get();
+            doc = existing.get();
+        } else {
+            doc = new Document();
+            doc.setContentText(text);
+            doc.setFileUrl(fileUrl);
+            doc.setHash(hash);
+            doc.setCreatedAt(LocalDateTime.now());
+
+            documentRepository.save(doc);
+
+            saveFingerprints(doc, text);
+            fingerprintIndexService.indexDocument(doc.getId(), text);
         }
-
-        Document doc = new Document();
-
-        doc.setContentText(text);
-        doc.setFileUrl(fileUrl);
-        doc.setHash(hash);
-        doc.setCreatedAt(LocalDateTime.now());
-
-        documentRepository.save(doc);
-
-        saveFingerprints(doc, text);
 
         return doc;
     }
