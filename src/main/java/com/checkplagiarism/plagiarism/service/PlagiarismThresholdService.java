@@ -103,4 +103,90 @@ public class PlagiarismThresholdService {
             this.plagiarismThresholdRepository.save(pl);
         }
     }
+
+    public void addLevel(Long classId) {
+
+        ClassRoom classRoom = classRoomRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        List<PlagiarismThresholds> list = plagiarismThresholdRepository
+                .findByClassRoomIdOrderByMaxAsc(classId);
+
+        int min = 0;
+        int max = 20;
+
+        String levelName = "SAFE";
+
+        if (!list.isEmpty()) {
+
+            PlagiarismThresholds last = list.get(list.size() - 1);
+
+            if (last.getMax() >= 100) {
+                throw new RuntimeException("Max level reached");
+            }
+
+            min = last.getMax();
+            max = min + 20;
+
+            if (max > 100)
+                max = 100;
+
+            switch (list.size()) {
+                case 1:
+                    levelName = "LOW";
+                    break;
+                case 2:
+                    levelName = "MODERATE";
+                    break;
+                case 3:
+                    levelName = "HIGH";
+                    break;
+                case 4:
+                    levelName = "SEVERE";
+                    break;
+            }
+        }
+
+        PlagiarismThresholds threshold = new PlagiarismThresholds();
+        threshold.setMin(min);
+        threshold.setMax(max);
+        threshold.setLevelName(levelName);
+        threshold.setClassRoom(classRoom);
+
+        plagiarismThresholdRepository.save(threshold);
+    }
+
+    public PlagiarismThresholds updateLevel(Long id, Integer min, Integer max) {
+
+        PlagiarismThresholds level = plagiarismThresholdRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Threshold not found"));
+
+        List<PlagiarismThresholds> list = plagiarismThresholdRepository
+                .findByClassRoomIdOrderByMinAsc(level.getClassRoom().getId());
+
+        if (min >= max) {
+            throw new RuntimeException("Min must be smaller than Max");
+        }
+
+        if (min < 0 || max > 100) {
+            throw new RuntimeException("Range must be between 0 and 100");
+        }
+
+        for (PlagiarismThresholds t : list) {
+
+            if (t.getId().equals(id))
+                continue;
+
+            boolean overlap = min < t.getMax() && max > t.getMin();
+
+            if (overlap) {
+                throw new RuntimeException("Threshold overlaps with existing level");
+            }
+        }
+
+        level.setMin(min);
+        level.setMax(max);
+
+        return plagiarismThresholdRepository.save(level);
+    }
 }

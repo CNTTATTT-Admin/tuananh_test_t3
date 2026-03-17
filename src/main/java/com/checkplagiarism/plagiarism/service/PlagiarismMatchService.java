@@ -19,7 +19,8 @@ public class PlagiarismMatchService {
             PlagiarismCheck check,
             Document document,
             double percent,
-            String matchedText) {
+            String matchedText,
+            int start, int end) {
 
         PlagiarismMatch match = new PlagiarismMatch();
 
@@ -27,6 +28,8 @@ public class PlagiarismMatchService {
         match.setDocument(document);
         match.setSimilarityPercent(percent);
         match.setMatchedText(matchedText);
+        match.setStartPosition(start);
+        match.setEndPosition(end);
 
         plagiarismMatchRepository.save(match);
     }

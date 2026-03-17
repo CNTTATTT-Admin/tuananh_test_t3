@@ -99,6 +99,9 @@ public class DatabaseInitializer implements CommandLineRunner {
             arr.add(new Permission("Get class by lecturer", "/api/v1/classes/lecturer", "GET", "CLASS"));
             arr.add(new Permission("Get thresshold by user", "/api/v1/thresholds/class/{classId}", "GET", "THRESHOLD"));
             arr.add(new Permission("create submission ", "/api/v1/submissions", "POST", "SUBMISSION"));
+            arr.add(new Permission("get assignment by lec ", "/api/v1/assignments/class/{classRoomId}", "GET", "ASSIGNMENT"));
+            arr.add(new Permission("create by lec ", "/api/v1/thresholds/class/{classId}", "POST", "THRESHOLD"));
+            arr.add(new Permission("update by lec ", "/api/v1/thresholds/class", "PUT", "THRESHOLD"));
             this.permissionrRepository.saveAll(arr);
 
             
@@ -115,7 +118,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             this.roleRepository.save(adminRole);
 
-            List<Long> studentIds = List.of(23L, 26L, 28L, 34L, 35L,45L,46L,48L);
+            List<Long> studentIds = List.of(23L, 26L, 28L, 34L, 35L, 41L, 45L, 46L, 48L);
             List<Permission> studentPermissions = permissionrRepository.findByIdIn(studentIds);
 
             Role studentRole = new Role();
@@ -127,7 +130,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             roleRepository.save(studentRole);
 
 
-            List<Long> lecturerIds = List.of(17L, 18L, 19L, 20L, 21L, 22L, 24L, 25L, 27L, 28L, 29L, 30L, 31L, 32L, 33L, 34L, 35L, 36L, 37L, 38L, 39L, 40L, 41L, 42L, 43L, 44L,45L,46L,47L,48L);
+            List<Long> lecturerIds = List.of(17L, 18L, 19L, 20L, 21L, 22L, 24L, 25L, 27L, 28L, 29L, 30L, 31L, 32L, 33L, 34L, 35L, 36L, 37L, 38L, 39L, 40L, 41L, 42L, 43L, 44L,45L,46L,47L,48L,49L,50L,51L);
             List<Permission> lecturerPermissions = permissionrRepository.findByIdIn(lecturerIds);
 
             Role lecturerRole = new Role();
@@ -152,6 +155,19 @@ public class DatabaseInitializer implements CommandLineRunner {
                 admin.setRole(adminRole);
             }
             this.userRepository.save(admin);
+
+            User lecturer = new User();
+            lecturer.setEmail("lec@gmail.com");
+            lecturer.setAge(20);
+            lecturer.setGender(GenderEnum.MALE);
+            lecturer.setName("LECTURER");
+            lecturer.setPassword(this.passwordEncoder.encode("123456"));
+
+            Role lecRole = this.roleRepository.findByName("LECTURER");
+            if (lecRole != null) {
+                lecturer.setRole(lecRole);
+            }
+            this.userRepository.save(lecturer);
         }
     }
 }

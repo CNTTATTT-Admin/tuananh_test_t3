@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.checkplagiarism.plagiarism.domain.Document;
 import com.checkplagiarism.plagiarism.domain.DocumentFingerprint;
+import com.checkplagiarism.plagiarism.domain.FingerPrint;
 import com.checkplagiarism.plagiarism.repository.DocumentRepository;
 import com.checkplagiarism.plagiarism.repository.FingerprintRepository;
 
@@ -50,20 +51,21 @@ private final DocumentRepository documentRepository;
 
     private void saveFingerprints(Document document, String text) {
 
-        Set<Long> hashes = fingerprintService.generateFingerprints(text);
+         List<FingerPrint> fps = fingerprintService.generateFingerprints(text);
 
-        List<DocumentFingerprint> list = new ArrayList<>();
+    List<DocumentFingerprint> list = new ArrayList<>();
 
-        for (Long h : hashes) {
+    for (FingerPrint f : fps) {
 
-            DocumentFingerprint fp = new DocumentFingerprint();
+        DocumentFingerprint fp = new DocumentFingerprint();
 
-            fp.setHashValue(h);
-            fp.setDocument(document);
+        fp.setHashValue(f.getHash());
+        fp.setPosition(f.getPosition());
+        fp.setDocument(document);
 
-            list.add(fp);
-        }
+        list.add(fp);
+    }
 
-        fingerprintRepository.saveAll(list);
+    fingerprintRepository.saveAll(list);
     }
 }

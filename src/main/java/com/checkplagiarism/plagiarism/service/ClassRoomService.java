@@ -32,6 +32,7 @@ import com.checkplagiarism.plagiarism.repository.UserRepository;
 import com.checkplagiarism.plagiarism.util.SecurityUtil;
 import com.checkplagiarism.plagiarism.util.constants.ClassStatusEnum;
 import com.checkplagiarism.plagiarism.util.constants.RoleEnum;
+import com.checkplagiarism.plagiarism.util.err.IdInvalidException;
 
 import lombok.AllArgsConstructor;
 
@@ -97,12 +98,18 @@ public class ClassRoomService {
         }
         this.classRoomRepository.deleteById(id);
     }
+    public boolean isExistStudentInClass(Long userId, Long classId){
+        return this.classStudentRepository.existsByUserIdAndClassRoomId(userId,classId);
+    }
 
     // role lecturer
-    public void addStudentToClass(ReqAddToClassDTO req){
+    public void addStudentToClass(ReqAddToClassDTO req) throws IdInvalidException{
         ClassRoom classRoom= this.classRoomRepository.findById(req.getClassId()).orElse(null);
         User user= this.userRepository.findByEmail(req.getEmail());
         ClassStudent classStudent = new ClassStudent();
+        if (isExistStudentInClass(user.getId(),classRoom.getId())) {
+            throw new IdInvalidException("The student has been in the class");
+        }
         if (classRoom !=null && user!=null) {
             classStudent.setUser(user);
             classStudent.setClassRoom(classRoom);

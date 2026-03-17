@@ -1,5 +1,9 @@
 package com.checkplagiarism.plagiarism.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -10,6 +14,7 @@ import com.checkplagiarism.plagiarism.domain.ClassRoom;
 import com.checkplagiarism.plagiarism.domain.request.assignment.ReqCreateAssignmentDTO;
 import com.checkplagiarism.plagiarism.domain.request.assignment.ReqUpdateAssignmentDTO;
 import com.checkplagiarism.plagiarism.domain.response.ResultPaginationDTO;
+import com.checkplagiarism.plagiarism.domain.response.assignment.ResAssignmentDTO;
 import com.checkplagiarism.plagiarism.repository.AssignmentRepository;
 import com.checkplagiarism.plagiarism.repository.ClassRoomRepository;
 
@@ -58,12 +63,43 @@ public class AssignmentService {
         meta.setPages(assignment.getTotalPages());
         meta.setTotal(assignment.getTotalElements());
 
+        List<ResAssignmentDTO> res= assignment.getContent().stream().map(item->this.convResAssignmentDTO(item)).collect(Collectors.toList());
+
         rs.setMeta(meta);
-        rs.setResults(assignment.getContent());
+        rs.setResults(res);
         return rs;
     }
 
     public void deleteAssignment(Long id){
         this.assignmentRepository.deleteById(id);
     }
+
+    public List<ResAssignmentDTO> getAssignmentByClassId(Long classId){
+        List<Assignment> assignments=this.assignmentRepository.findByClassRoomId(classId);
+        List<ResAssignmentDTO> list= new ArrayList<>();
+        if (!assignments.isEmpty()) {
+            
+            for(Assignment as:assignments)
+            {
+                ResAssignmentDTO res=this.convResAssignmentDTO(as);
+                list.add(res);
+            }
+        }
+        return list;
+    }
+
+    public ResAssignmentDTO convResAssignmentDTO(Assignment assignment){
+        ResAssignmentDTO res= new ResAssignmentDTO();
+        res.setId(assignment.getId());
+        res.setTitle(assignment.getTitle());
+        res.setDescription(assignment.getDescription());
+        res.setDueDate(assignment.getDueDate());
+        res.setCreatedAt(assignment.getCreatedAt());
+        ResAssignmentDTO.ClassRoomInner inner= new ResAssignmentDTO.ClassRoomInner();
+        inner.setId(assignment.getClassRoom()!=null ? assignment.getClassRoom().getId() : null);
+        inner.setClassName(assignment.getClassRoom()!=null ? assignment.getClassRoom().getName() : null);
+        res.setClassRoom(inner);
+        return res;
+    }
+    
 }

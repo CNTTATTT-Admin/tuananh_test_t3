@@ -84,5 +84,23 @@ public class ThresholdController {
     public ResponseEntity<List<PlagiarismThresholds>> getByClass(@PathVariable Long classId) {
         return ResponseEntity.ok().body(this.service.getThresholdByClass(classId));
     }
+
+    @PostMapping("/thresholds/class/{classId}")
+    public ResponseEntity<?> addThreshold(@PathVariable Long classId) {
+
+        this.service.addLevel(classId);
+
+        return ResponseEntity.ok("Added threshold");
+    }
+
+    @PutMapping("/thresholds/class")
+    public ResponseEntity<?> updateThreshold(
+            @PathVariable Long id,
+            @RequestBody ReqUpdateThresholdDTO req) {
+
+        PlagiarismThresholds level = this.service.updateLevel(id, req.getMin(), req.getMax());
+
+        return ResponseEntity.ok().body(level);
+    }
     
 }
