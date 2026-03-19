@@ -20,8 +20,9 @@ export default function SubmissionsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (isBackground = false) => {
       try {
+        if (!isBackground) setIsLoading(true);
         const [subsData, classesData] = await Promise.all([
           classService.getAllSubmissions(),
           classService.getClasses()
@@ -29,12 +30,19 @@ export default function SubmissionsPage() {
         setSubmissions(subsData);
         setClasses(classesData.results || classesData);
       } catch (error) {
-        toast.error("Failed to load submission data");
+        if (!isBackground) toast.error("Failed to load submission data");
       } finally {
-        setIsLoading(false);
+        if (!isBackground) setIsLoading(false);
       }
     };
+
     fetchData();
+
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const filtered = submissions.filter((sub) => {

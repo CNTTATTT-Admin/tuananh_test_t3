@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,20 +15,28 @@ export default function MonitorPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchSubmissions = async (isBackground = false) => {
+    try {
+      if (!isBackground) setIsLoading(true);
+      const data = await classService.getAllSubmissions();
+      // Optionally sort by most recent if not already sorted by backend
+      const sorted = Array.isArray(data)
+        ? data.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+        : [];
+      setSubmissions(sorted);
+    } catch (error) {
+      if (!isBackground) toast.error("Failed to load monitor data");
+    } finally {
+      if (!isBackground) setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        const data = await classService.getAllSubmissions();
-        // Sort newest first
-        const sorted = data.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-        setSubmissions(sorted);
-      } catch (error) {
-        console.error("Failed to load monitor data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchSubmissions();
+    const interval = setInterval(() => {
+      fetchSubmissions(true);
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const getSeverity = (percentage: number): "safe" | "low" | "medium" | "high" => {

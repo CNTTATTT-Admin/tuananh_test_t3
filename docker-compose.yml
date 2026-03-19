@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: plagiarism-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: plagiarism
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - plagiarism-net
+
+  # 2. Cơ sở dữ liệu Elasticsearch
+  elasticsearch:
+    image: elasticsearch:8.10.4
+    container_name: plagiarism-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - plagiarism-net
+
+  # 3. Ứng dụng Spring Boot Backend
+  backend:
+    build: ./backend
+    container_name: plagiarism-backend
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - elasticsearch
+    environment:
+      # Spring Boot sẽ tự hiểu các biến môi trường này và ghi đè url trong application.properties
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/plagiarism
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+    ports:
+      - "8080:8080"
+    networks:
+      - plagiarism-net
+
+networks:
+  plagiarism-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  es_data:

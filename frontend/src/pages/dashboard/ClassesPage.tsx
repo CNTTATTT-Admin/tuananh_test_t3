@@ -20,22 +20,27 @@ export default function ClassesPage() {
   const [newClassName, setNewClassName] = useState("");
   const [newClassDesc, setNewClassDesc] = useState("");
 
-  const fetchClasses = async () => {
-    setIsLoading(true);
+  const fetchClasses = async (isBackground = false) => {
+    if (!isBackground) setIsLoading(true);
     try {
       const response = await classService.getClasses();
-      // Handle potential pagination wrapper
       const data = response.results || response;
       setClasses(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      toast.error(error.message || "Failed to fetch classes");
+      if (!isBackground) toast.error(error.message || "Failed to fetch classes");
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchClasses();
+
+    const interval = setInterval(() => {
+      fetchClasses(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreateClass = async () => {

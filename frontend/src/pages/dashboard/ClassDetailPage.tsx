@@ -49,10 +49,10 @@ export default function ClassDetailPage() {
   const [editingLevels, setEditingLevels] = useState<PlagiarismThreshold[]>([]);
   const [levelsDialogOpen, setLevelsDialogOpen] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isBackground = false) => {
     if (!classId) return;
     const clsIdNum = parseInt(classId);
-    setIsLoading(true);
+    if (!isBackground) setIsLoading(true);
     
     try {
       // 1. Mandatory data for both
@@ -91,12 +91,19 @@ export default function ClassDetailPage() {
       toast.error(error.message || "Failed to load class data");
       navigate("/dashboard/classes"); // Go back if unauthorized or not found
     } finally {
-      setIsLoading(false);
+      if (!isBackground) setIsLoading(false);
     }
   }, [classId, isLecturer, user?.id, navigate]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // Initial load
+    
+    // Silent background polling every 10 seconds
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   const handleCreateAssignment = async () => {

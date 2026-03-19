@@ -42,8 +42,9 @@ export default function StatsPage() {
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    const fetchGlobalStats = async () => {
+    const fetchGlobalStats = async (isBackground = false) => {
       try {
+        if (!isBackground) setLoading(true);
         const [usersResp, classesResp, subsResp] = await Promise.all([
           userService.getAllUsers(1, 1),
           classService.getClasses(),
@@ -59,11 +60,17 @@ export default function StatsPage() {
       } catch (error) {
         console.error("Failed to load statistics", error);
       } finally {
-        setLoading(false);
+        if (!isBackground) setLoading(false);
       }
     };
 
     fetchGlobalStats();
+
+    const interval = setInterval(() => {
+        fetchGlobalStats(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Derived state calculations
