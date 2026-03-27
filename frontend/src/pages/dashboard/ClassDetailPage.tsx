@@ -276,7 +276,7 @@ export default function ClassDetailPage() {
     const lastMax = editingLevels.length > 0 ? Math.max(...editingLevels.map(l => l.max)) : -1;
     const nextMin = lastMax + 1 > 100 ? 100 : lastMax + 1;
     const nextMax = nextMin + 10 > 100 ? 100 : nextMin + 10;
-    
+
     setEditingLevels([...editingLevels, {
       id: Date.now(),
       levelName: "NEW LEVEL",
