@@ -113,13 +113,18 @@ public class DatabaseInitializer implements CommandLineRunner {
         allPermsList.add(new Permission("Get thresholds with pagination", "/api/v1/thresholds", "GET", "THRESHOLD"));
         allPermsList.add(
                 new Permission("Get thresholds by class", "/api/v1/thresholds/class/{classId}", "GET", "THRESHOLD"));
+        allPermsList.add(new Permission("Update all thresholds", "/api/v1/thresholds/all", "POST", "THRESHOLD"));
 
         // AUTH module
         allPermsList.add(new Permission("Get current account info", "/api/v1/auth/account", "GET", "AUTH"));
         allPermsList.add(new Permission("Logout user", "/api/v1/auth/logout", "POST", "AUTH"));
 
-        if (countPermissions == 0) {
-            this.permissionrRepository.saveAll(allPermsList);
+        // 1. INITIALIZE PERMISSIONS
+        for (Permission p : allPermsList) {
+            Permission existing = this.permissionrRepository.findByApiPathAndMethod(p.getApiPath(), p.getMethod());
+            if (existing == null) {
+                this.permissionrRepository.save(p);
+            }
         }
 
         // 2. INITIALIZE ROLES

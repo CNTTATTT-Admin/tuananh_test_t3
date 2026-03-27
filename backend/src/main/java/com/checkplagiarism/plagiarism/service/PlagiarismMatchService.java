@@ -34,4 +34,10 @@ public class PlagiarismMatchService {
 
         plagiarismMatchRepository.save(match);
     }
+
+    public void saveAllMatches(java.util.List<PlagiarismMatch> matches) {
+        if (matches != null && !matches.isEmpty()) {
+            plagiarismMatchRepository.saveAll(matches);
+        }
+    }
 }

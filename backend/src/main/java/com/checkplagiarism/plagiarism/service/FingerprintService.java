@@ -19,7 +19,11 @@ import lombok.AllArgsConstructor;
 public class FingerprintService {
 
     private static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
-        "là", "của", "và", "những", "các", "có", "được", "trong", "một", "cho", "với", "không", "đã", "đang", "sẽ"
+        "bị", "bởi", "cả", "cái", "càng", "chiếc", "cho", "chứ", "chưa", "chuyện", "có", "cũng", "cuối", "cuộc", "cửa", 
+        "dùng", "dưới", "đã", "đang", "đi", "đến", "đây", "đó", "được", "đưa", "giữa", "hay", "hãy", "hơn", "khi", 
+        "không", "là", "lại", "làm", "lên", "lúc", "mà", "mỗi", "một", "này", "nên", "nếu", "ngay", "nhiều", "như", 
+        "nhưng", "những", "nơi", "nữa", "phải", "qua", "quá", "ra", "rằng", "rất", "rồi", "sau", "sẽ", "so", "sự", 
+        "tại", "theo", "thế", "thì", "thôi", "trong", "trên", "trước", "từ", "tới", "và", "vẫn", "về", "việc", "với", "vừa"
     ));
 
     public String normalizeText(String text) {

@@ -33,6 +33,9 @@ public class PlagiarismCheck {
     @JoinColumn(name = "submission_id")
     private Submission submission;
 
+    @Column(columnDefinition = "TEXT")
+    private String aiSummary;
+
     @OneToMany(mappedBy = "check")
     private List<PlagiarismMatch> matches;
 }

@@ -70,6 +70,9 @@ const classService = {
   deleteThreshold: async (id: number): Promise<void> => {
     return axiosInstance.delete(`/thresholds/${id}`);
   },
+  saveAllThresholds: async (classId: number, thresholds: any[]): Promise<PlagiarismThreshold[]> => {
+    return axiosInstance.post("/thresholds/all", { classId, thresholds });
+  },
 
   // Submissions
   getSubmissionsByAssignment: async (assignmentId: number): Promise<Submission[]> => {

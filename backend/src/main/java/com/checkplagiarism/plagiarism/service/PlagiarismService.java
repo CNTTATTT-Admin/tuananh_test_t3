@@ -29,6 +29,7 @@ public class PlagiarismService {
     private final PlagiarismMatchService matchService;
     private final DocumentRepository documentRepository;
     private final PlagiarismCheckService checkService;
+    private final GeminiService geminiService;
 
     @Async("processExecutor")
     public CompletableFuture<Double> checkPlagiarismAsync(
@@ -39,6 +40,17 @@ public class PlagiarismService {
 
         try {
             double percent = checkPlagiarism(text, check);
+
+            // Gọi AI để tạo tóm tắt kết quả
+            List<String> matchedBlocks = new ArrayList<>();
+            if (check.getMatches() != null) {
+                check.getMatches().stream()
+                        .limit(10) // Gửi tối đa 10 đoạn khớp tiêu biểu để tiết kiệm token
+                        .forEach(m -> matchedBlocks.add(m.getMatchedText()));
+            }
+            String aiSummary = geminiService.generateSummary(text, matchedBlocks);
+            check.setAiSummary(aiSummary);
+
             checkService.finishCheck(check, percent);
             log.info("Finished plagiarism check for submission ID: {}. Result: {}%", check.getSubmission().getId(),
                     percent);
@@ -122,6 +134,8 @@ public class PlagiarismService {
         int totalHashesInInput = hashToPositions.values().stream().mapToInt(List::size).sum();
         double maxSimilarity = 0;
 
+        List<com.checkplagiarism.plagiarism.domain.PlagiarismMatch> allMatches = new ArrayList<>();
+
         for (Long docId : docToMatchedInputPos.keySet()) {
             Set<Integer> matchedPosSet = docToMatchedInputPos.get(docId);
             int matchCount = matchedPosSet.size();
@@ -132,7 +146,7 @@ public class PlagiarismService {
             }
 
             // Save matches as regions for UI highlighting
-            if (percent > 1.0) { // Threshold for showing in UI
+            if (percent > 0.5) { // Lower threshold slightly for more detailed reporting
                 Document doc = documentRepository.findById(docId).orElse(null);
                 if (doc != null) {
                     // Group contiguous positions into ranges
@@ -148,39 +162,42 @@ public class PlagiarismService {
                             if (current == end + 1) {
                                 end = current;
                             } else {
-                                saveRangeMatch(check, doc, percent, start, end, titleMap.get(docId), matchCount);
+                                allMatches.add(createMatchObject(check, doc, percent, start, end, titleMap.get(docId)));
                                 start = current;
                                 end = current;
                             }
                         }
                         // Save last range
-                        saveRangeMatch(check, doc, percent, start, end, titleMap.get(docId), matchCount);
+                        allMatches.add(createMatchObject(check, doc, percent, start, end, titleMap.get(docId)));
                     }
                 }
             }
         }
 
+        if (!allMatches.isEmpty()) {
+            check.setMatches(allMatches);
+            matchService.saveAllMatches(allMatches);
+        }
+
         return maxSimilarity;
     }
 
-    private void saveRangeMatch(PlagiarismCheck check, Document doc, double totalPercent, int startWordIdx,
-            int endWordIdx, String title, int totalMatchCount) {
-        // N-grams use 3 words, so the end of the last n-gram is startWordIdx + 2?
-        // Let's just store the word indices.
-        // Frontend can use these to highlight.
+    private com.checkplagiarism.plagiarism.domain.PlagiarismMatch createMatchObject(
+            PlagiarismCheck check, Document doc, double totalPercent, int startWordIdx,
+            int endWordIdx, String title) {
 
         int blockLength = endWordIdx - startWordIdx + 1;
-        String description = "Matched block of " + blockLength + " fingerprints (" + String.format("%.1f", totalPercent)
-                + "%) with: " + title;
+        String description = "Khối khớp gồm " + blockLength + " vân tay (" + String.format("%.1f", totalPercent)
+                + "%) với tài liệu: " + title;
 
-        // We set startPosition and endPosition to the word indices
-        this.matchService.saveMatch(
-                check,
-                doc,
-                totalPercent,
-                description,
-                startWordIdx,
-                endWordIdx + 2 // approx word end since it's 3-grams
-        );
+        com.checkplagiarism.plagiarism.domain.PlagiarismMatch match = new com.checkplagiarism.plagiarism.domain.PlagiarismMatch();
+        match.setCheck(check);
+        match.setDocument(doc);
+        match.setSimilarityPercent(totalPercent);
+        match.setMatchedText(description);
+        match.setStartPosition(startWordIdx);
+        match.setEndPosition(endWordIdx + 2); // n-grams are 3 words
+
+        return match;
     }
 }

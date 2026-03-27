@@ -1,10 +1,11 @@
-    package com.checkplagiarism.plagiarism.controller;
+package com.checkplagiarism.plagiarism.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.checkplagiarism.plagiarism.domain.PlagiarismThresholds;
 import com.checkplagiarism.plagiarism.domain.request.plagiarismthreshold.ReqCreateThresholdDTO;
+import com.checkplagiarism.plagiarism.domain.request.plagiarismthreshold.ReqSaveAllThresholdDTO;
 import com.checkplagiarism.plagiarism.domain.request.plagiarismthreshold.ReqUpdateThresholdDTO;
 import com.checkplagiarism.plagiarism.domain.response.ResultPaginationDTO;
 import com.checkplagiarism.plagiarism.service.PlagiarismThresholdService;
@@ -36,6 +37,11 @@ public class ThresholdController {
     @PostMapping("/thresholds")
     public ResponseEntity<PlagiarismThresholds> create(@RequestBody ReqCreateThresholdDTO req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.service.create(req));
+    }
+
+    @PostMapping("/thresholds/all")
+    public ResponseEntity<java.util.List<PlagiarismThresholds>> saveAll(@RequestBody ReqSaveAllThresholdDTO req) {
+        return ResponseEntity.status(HttpStatus.OK).body(this.service.saveAll(req));
     }
 
     @PutMapping("/thresholds")
