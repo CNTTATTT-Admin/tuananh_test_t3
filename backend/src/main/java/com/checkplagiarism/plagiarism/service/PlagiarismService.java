@@ -1,0 +1,203 @@
+package com.checkplagiarism.plagiarism.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import com.checkplagiarism.plagiarism.domain.Document;
+import com.checkplagiarism.plagiarism.domain.PlagiarismCheck;
+import com.checkplagiarism.plagiarism.domain.elasticsearch.DocumentFingerprintES;
+import com.checkplagiarism.plagiarism.repository.DocumentRepository;
+import com.checkplagiarism.plagiarism.repository.elasticsearch.FingerprintESRepository;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@AllArgsConstructor
+@Slf4j
+public class PlagiarismService {
+    private final FingerprintService fingerprintService;
+    private final FingerprintESRepository fingerprintESRepository;
+    private final PlagiarismMatchService matchService;
+    private final DocumentRepository documentRepository;
+    private final PlagiarismCheckService checkService;
+    private final GeminiService geminiService;
+
+    @Async("processExecutor")
+    public CompletableFuture<Double> checkPlagiarismAsync(
+            String text,
+            PlagiarismCheck check) {
+
+        log.info("Starting plagiarism check for submission ID: {}", check.getSubmission().getId());
+
+        try {
+            double percent = checkPlagiarism(text, check);
+
+            // Gọi AI để tạo tóm tắt kết quả
+            List<String> matchedBlocks = new ArrayList<>();
+            if (check.getMatches() != null) {
+                check.getMatches().stream()
+                        .limit(10) // Gửi tối đa 10 đoạn khớp tiêu biểu để tiết kiệm token
+                        .forEach(m -> matchedBlocks.add(m.getMatchedText()));
+            }
+            String aiSummary = geminiService.generateSummary(text, matchedBlocks);
+            check.setAiSummary(aiSummary);
+
+            checkService.finishCheck(check, percent);
+            log.info("Finished plagiarism check for submission ID: {}. Result: {}%", check.getSubmission().getId(),
+                    percent);
+            return CompletableFuture.completedFuture(percent);
+        } catch (Throwable e) {
+            log.error("Error during plagiarism check", e);
+            checkService.failCheck(check, e.getMessage());
+            return CompletableFuture.completedFuture(0.0);
+        }
+    }
+
+    public double checkPlagiarism(
+            String text,
+            PlagiarismCheck check) {
+
+        Map<Long, List<Integer>> hashToPositions = fingerprintService.generateFingerprintsWithPositions(text);
+        Set<Long> hashes = hashToPositions.keySet();
+        if (hashes.isEmpty())
+            return 0.0;
+
+        log.info("Checking plagiarism for {} unique hashes", hashes.size());
+
+        // Query Elasticsearch for matching hashes. For texts under 2000 fingerprints,
+        // we check everything.
+        List<DocumentFingerprintES> matches;
+        if (hashes.size() > 2000) {
+            // Take a subset only if the text is exceptionally large
+            List<Long> subset = hashes.stream().limit(2000).toList();
+            matches = fingerprintESRepository.findByHashValueIn(subset);
+        } else {
+            matches = fingerprintESRepository.findByHashValueIn(new ArrayList<>(hashes));
+        }
+
+        log.info("Total matches found in Elasticsearch: {}", matches.size());
+
+        if (matches.isEmpty())
+            return 0.0;
+
+        // To allow matches from the same student during testing, we'll keep ownDocIds
+        // empty
+        java.util.Set<Long> ownDocIds = new java.util.HashSet<>();
+        /*
+         * Long currentStudentId = (check.getSubmission().getStudent() != null)
+         * ? check.getSubmission().getStudent().getId()
+         * : null;
+         * if (currentStudentId != null) {
+         * java.util.Set<Long> docIds =
+         * matches.stream().map(DocumentFingerprintES::getDocumentId)
+         * .collect(java.util.stream.Collectors.toSet());
+         * if (!docIds.isEmpty()) {
+         * List<com.checkplagiarism.plagiarism.domain.Document> documents =
+         * documentRepository.findAllById(docIds);
+         * ownDocIds = documents.stream()
+         * .filter(d -> d.getUploadedBy() != null &&
+         * d.getUploadedBy().getId().equals(currentStudentId))
+         * .map(com.checkplagiarism.plagiarism.domain.Document::getId)
+         * .collect(java.util.stream.Collectors.toSet());
+         * }
+         * }
+         */
+
+        // Group matches by document ID, mapping to target document's title and input
+        // positions
+        Map<Long, String> titleMap = new HashMap<>();
+        Map<Long, Set<Integer>> docToMatchedInputPos = new HashMap<>();
+
+        for (DocumentFingerprintES f : matches) {
+            Long docId = f.getDocumentId();
+            if (ownDocIds.contains(docId))
+                continue;
+
+            titleMap.put(docId, f.getDocumentTitle());
+
+            // For this hash, find all positions it appeared in the INPUT text
+            List<Integer> inputPositions = hashToPositions.get(f.getHashValue());
+            if (inputPositions != null) {
+                docToMatchedInputPos.computeIfAbsent(docId, k -> new HashSet<>()).addAll(inputPositions);
+            }
+        }
+
+        int totalHashesInInput = hashToPositions.values().stream().mapToInt(List::size).sum();
+        double maxSimilarity = 0;
+
+        List<com.checkplagiarism.plagiarism.domain.PlagiarismMatch> allMatches = new ArrayList<>();
+
+        for (Long docId : docToMatchedInputPos.keySet()) {
+            Set<Integer> matchedPosSet = docToMatchedInputPos.get(docId);
+            int matchCount = matchedPosSet.size();
+            double percent = (double) matchCount / totalHashesInInput * 100;
+
+            if (percent > maxSimilarity) {
+                maxSimilarity = percent;
+            }
+
+            // Save matches as regions for UI highlighting
+            if (percent > 0.5) { // Lower threshold slightly for more detailed reporting
+                Document doc = documentRepository.findById(docId).orElse(null);
+                if (doc != null) {
+                    // Group contiguous positions into ranges
+                    List<Integer> sortedPos = new ArrayList<>(matchedPosSet);
+                    java.util.Collections.sort(sortedPos);
+
+                    if (!sortedPos.isEmpty()) {
+                        int start = sortedPos.get(0);
+                        int end = start;
+
+                        for (int i = 1; i < sortedPos.size(); i++) {
+                            int current = sortedPos.get(i);
+                            if (current == end + 1) {
+                                end = current;
+                            } else {
+                                allMatches.add(createMatchObject(check, doc, percent, start, end, titleMap.get(docId)));
+                                start = current;
+                                end = current;
+                            }
+                        }
+                        // Save last range
+                        allMatches.add(createMatchObject(check, doc, percent, start, end, titleMap.get(docId)));
+                    }
+                }
+            }
+        }
+
+        if (!allMatches.isEmpty()) {
+            check.setMatches(allMatches);
+            matchService.saveAllMatches(allMatches);
+        }
+
+        return maxSimilarity;
+    }
+
+    private com.checkplagiarism.plagiarism.domain.PlagiarismMatch createMatchObject(
+            PlagiarismCheck check, Document doc, double totalPercent, int startWordIdx,
+            int endWordIdx, String title) {
+
+        int blockLength = endWordIdx - startWordIdx + 1;
+        String description = "Khối khớp gồm " + blockLength + " vân tay (" + String.format("%.1f", totalPercent)
+                + "%) với tài liệu: " + title;
+
+        com.checkplagiarism.plagiarism.domain.PlagiarismMatch match = new com.checkplagiarism.plagiarism.domain.PlagiarismMatch();
+        match.setCheck(check);
+        match.setDocument(doc);
+        match.setSimilarityPercent(totalPercent);
+        match.setMatchedText(description);
+        match.setStartPosition(startWordIdx);
+        match.setEndPosition(endWordIdx + 2); // n-grams are 3 words
+
+        return match;
+    }
+}
